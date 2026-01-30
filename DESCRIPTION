@@ -7,3 +7,5 @@ Description: What the package does (one paragraph).
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
+URL: https://github.com/zengminup/PBMC3K_Github_20260130
+BugReports: https://github.com/zengminup/PBMC3K_Github_20260130/issues
