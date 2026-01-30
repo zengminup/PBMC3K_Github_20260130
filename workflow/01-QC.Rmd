@@ -1,0 +1,53 @@
+---
+title: "01-QC"
+date: "Compiled at `r format(Sys.time(), '%Y-%m-%d %H:%M:%S', tz = 'UTC')` UTC"
+output: github_document
+params:
+  name: "01-QC" # change if you rename file
+---
+
+```{r here, message=FALSE}
+here::i_am(paste0(params$name, ".Rmd"), uuid = "b76157db-05c3-425b-ba0b-a7c037b5305c")
+```
+
+The purpose of this document is for QC
+
+```{r QC}
+# ----------------------------
+# QC and Filtering
+# ----------------------------
+# Calculate mitochondrial percentage
+projthis::proj_create_dir_target(params$name, clean = TRUE)
+
+path_target <- projthis::proj_path_target(params$name)
+path_source <- projthis::proj_path_source(params$name)
+
+pbmc <- readRDS(path_source("00-import", "pbmc_raw.rds"))
+pbmc[["percent.mt"]] <- PercentageFeatureSet(pbmc, pattern = "^MT-")
+
+# Visualize QC metrics
+VlnPlot(pbmc, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+# Scatter plots
+plot1 <- FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(pbmc, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+
+# Filter cells
+pbmc <- subset(pbmc, subset = nFeature_RNA > 200 & nFeature_RNA < 2500 & percent.mt < 5)
+
+# Save filtered object to this step's target directory
+saveRDS(pbmc, path_target("pbmc_qc.rds"))
+```
+
+## Tasks
+
+The first task is for QC
+
+## Files written
+
+These files have been written to the target directory, ```r paste0("data/", params$name)```:
+
+```{r list-files-target}
+projthis::proj_dir_info(path_target())
+```

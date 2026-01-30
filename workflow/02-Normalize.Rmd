@@ -1,0 +1,74 @@
+---
+title: "02-Normalize"
+date: "Compiled at `r format(Sys.time(), '%Y-%m-%d %H:%M:%S', tz = 'UTC')` UTC"
+output: github_document
+params:
+  name: "02-Normalize" # change if you rename file
+---
+
+```{r here, message=FALSE}
+here::i_am(paste0(params$name, ".Rmd"), uuid = "e09d76e8-4589-4d37-a7c1-1fa48aa6786e")
+```
+
+The purpose of this document is for PCA and UMAP
+
+```{r Normalize-PCA-UMAP}
+projthis::proj_create_dir_target(params$name, clean = TRUE)
+
+path_target <- projthis::proj_path_target(params$name)
+path_source <- projthis::proj_path_source(params$name)
+
+# ---- read pbmc object from QC step ----
+pbmc <- readRDS(path_source("01-QC", "pbmc_qc.rds"))
+
+# ----------------------------
+# Normalization & variable feature selection
+# ----------------------------
+
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 10000)
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+
+# Identify top 10 variable genes
+top10 <- head(VariableFeatures(pbmc), 10)
+
+# Plot variable features
+plot1 <- VariableFeaturePlot(pbmc)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+# Scale data & run PCA
+all.genes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = all.genes)
+pbmc <- RunPCA(pbmc, features = VariableFeatures(pbmc))
+
+# PCA visualization
+print(pbmc[["pca"]], dims = 1:5, nfeatures = 5)
+VizDimLoadings(pbmc, dims = 1:2, reduction = "pca")
+DimPlot(pbmc, reduction = "pca") + NoLegend()
+DimHeatmap(pbmc, dims = 1:15, cells = 500, balanced = TRUE)
+ElbowPlot(pbmc)
+
+# Find neighbors, clusters
+pbmc <- FindNeighbors(pbmc, dims = 1:10)
+pbmc <- FindClusters(pbmc, resolution = 0.5)
+head(Idents(pbmc), 5)
+
+# Run UMAP
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+DimPlot(pbmc, reduction = "umap")
+
+# Save final object to this step's target directory
+saveRDS(pbmc, path_target("pbmc_normalized.rds"))
+```
+
+## Tasks
+
+The first task is for PCA and UMAP
+
+## Files written
+
+These files have been written to the target directory, ```r paste0("data/", params$name)```:
+
+```{r list-files-target}
+projthis::proj_dir_info(path_target())
+```

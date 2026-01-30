@@ -1,0 +1,90 @@
+---
+title: "03-annotation"
+date: "Compiled at `r format(Sys.time(), '%Y-%m-%d %H:%M:%S', tz = 'UTC')` UTC"
+output: github_document
+params:
+  name: "03-annotation" # change if you rename file
+---
+
+```{r here, message=FALSE}
+here::i_am(paste0(params$name, ".Rmd"), uuid = "e677cc30-5ca2-4e34-9a11-b37864a8391f")
+```
+
+The purpose of this document is for annotation
+
+```{r annotation}
+library(ggplot2)
+projthis::proj_create_dir_target(params$name, clean = TRUE)
+
+path_target <- projthis::proj_path_target(params$name)
+path_source <- projthis::proj_path_source(params$name)
+
+pbmc <- readRDS(path_source("02-Normalize", "pbmc_normalized.rds"))
+
+
+# ----------------------------
+# Finding differentially expressed features (cluster biomarkers)
+# ----------------------------
+
+# find all markers of cluster 2
+cluster2.markers <- FindMarkers(pbmc, ident.1 = 2)
+head(cluster2.markers, n = 5)
+
+# Example: Find markers for cluster 5 vs clusters 0 and 3
+cluster5.markers <- FindMarkers(pbmc, ident.1 = 5, ident.2 = c(0, 3))
+head(cluster5.markers, n = 5)
+
+# Find markers for all clusters (only positive markers)
+pbmc.markers <- FindAllMarkers(pbmc, only.pos = TRUE)
+
+
+# ----------------------------
+# Visualize marker expression
+# ----------------------------
+
+# Violin plots for canonical markers
+VlnPlot(pbmc, features = c("MS4A1", "CD79A"))
+VlnPlot(pbmc, features = c("NKG7", "PF4"), slot = "counts", log = TRUE)
+
+# Feature plots on UMAP
+FeaturePlot(pbmc, features = c("MS4A1", "GNLY", "CD3E", "CD14", 
+                               "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A"))
+
+
+
+# ----------------------------
+# Assign canonical cell type identities
+# ----------------------------
+new.cluster.ids <- c("Naive CD4 T", "CD14+ Mono", "Memory CD4 T", "B", 
+                     "CD8 T", "FCGR3A+ Mono", "NK", "DC", "Platelet")
+names(new.cluster.ids) <- levels(pbmc)
+pbmc <- RenameIdents(pbmc, new.cluster.ids)
+
+# Enhanced UMAP plot with ggplot2 theme
+plot <- DimPlot(pbmc, reduction = "umap", label = TRUE, label.size = 4.5) +
+    xlab("UMAP 1") + ylab("UMAP 2") +
+    theme(axis.title = element_text(size = 18), 
+          legend.text = element_text(size = 18)) +
+    guides(colour = guide_legend(override.aes = list(size = 10)))
+
+# Save UMAP plot to this step's target directory
+dir.create(path_target("images"), showWarnings = FALSE)
+ggsave(filename = path_target("images/pbmc3k_umap.jpg"), height = 7, width = 12, plot = plot, quality = 50)
+
+# Save final Seurat object to this step's target directory
+saveRDS(pbmc, path_target("pbmc_final.rds"))
+```
+
+
+
+## Tasks
+
+The first task is for annotation
+
+## Files written
+
+These files have been written to the target directory, ```r paste0("data/", params$name)```:
+
+```{r list-files-target}
+projthis::proj_dir_info(path_target())
+```

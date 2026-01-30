@@ -1,0 +1,69 @@
+---
+title: "00-import"
+date: "Compiled at `r format(Sys.time(), '%Y-%m-%d %H:%M:%S', tz = 'UTC')` UTC"
+output: github_document
+params:
+  name: "00-import" # change if you rename file
+---
+
+```{r here, message=FALSE}
+here::i_am(paste0(params$name, ".Rmd"), uuid = "16ca601d-32e6-4bf0-8e45-21f085171d59")
+```
+
+The purpose of this document is load package
+
+```{r setup and import, message=FALSE, warning=FALSE}
+library(Seurat)
+library(here)
+library(projthis)
+
+# ---- initialize workflow step ----
+projthis::proj_create_dir_target(params$name, clean = TRUE)
+
+path_target <- projthis::proj_path_target(params$name)
+path_source <- projthis::proj_path_source(params$name)
+
+# ---- raw data paths (relative to project root) ----
+
+data_tar <- here::here("data", "pbmc3k_filtered_gene_bc_matrices.tar.gz")
+data_dir <- here::here("data", "filtered_gene_bc_matrices", "hg19")
+
+
+# ---- unpack if needed ----
+if (!dir.exists(data_dir)) {
+  #  data/pbmc3k_filtered_gene_bc_matrices
+  untar(data_tar, exdir = here::here("data/pbmc3k_filtered_gene_bc_matrices"))
+}
+
+if (!dir.exists(data_dir)) {
+  stop("data_dir does not exist after untar: ", data_dir)
+}
+
+# ---- load data ----
+pbmc.data <- Read10X(data.dir = data_dir)
+
+pbmc <- CreateSeuratObject(
+  counts = pbmc.data,
+  project = "pbmc3k",
+  min.cells = 3,
+  min.features = 200
+)
+
+pbmc
+
+saveRDS(pbmc, path_target("pbmc_raw.rds"))
+
+```
+
+
+## Tasks
+
+The first task is for setup
+
+## Files written
+
+These files have been written to the target directory, ```r paste0("data/", params$name)```:
+
+```{r list-files-target}
+projthis::proj_dir_info(path_target())
+```

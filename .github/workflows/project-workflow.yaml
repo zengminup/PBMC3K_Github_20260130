@@ -1,0 +1,65 @@
+# Workflow derived from https://github.com/r-lib/actions/blob/v2/examples/pkgdown.yaml
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  # push:
+  #   branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+  push:
+    paths:
+      - README.Rmd
+
+  # # runs on a schedule using UTC - see https://en.wikipedia.org/wiki/Cron
+  # # **important**
+  # #   uncommented, `schedule:` must have the same indentation as `push:`
+  schedule:
+    - cron:  '00 08 * * *' # 08:00 UTC every day
+
+name: projthis-build
+
+jobs:
+  projthis-build:
+    runs-on: ubuntu-latest
+    # Only restrict concurrency for non-PR jobs
+    concurrency:
+      group: projthis-${{ github.event_name != 'pull_request' || github.run_id }}
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.13
+          cache: pip # caching pip dependencies
+
+      - run: pip install -r requirements.txt
+
+      # adapt this step to build your project
+      - name: Render
+        # - uncomment and adapt the call to `projthis::proj_workflow_render()`
+        # - to run another workflow, add another call
+        run: |
+          rmarkdown::render("README.Rmd")
+        shell: Rscript {0}
+
+      # adapt this step to deploy your project
+      - name: Commit
+        # - `git add -u` adds files that are *already* part of the repository
+        # - you may have to be creative with your `git add` call(s)
+        # - be wary of `git add -A`, as you might commit files you wish you hadn't
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add "README.md""
+          git commit -m "updated by Actions" || echo "No changes to commit"
+          git push || echo "No changes to commit"
