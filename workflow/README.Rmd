@@ -1,5 +1,5 @@
 ---
-title: ""
+title: "PBMC3K"
 date: "Compiled at `r format(Sys.time(), '%Y-%m-%d %H:%M:%S', tz = 'UTC')` UTC"
 output: github_document
 ---
@@ -11,7 +11,7 @@ here::i_am("README.Rmd", uuid = "8e2ea86b-5fbb-40ac-a4f8-dd2649524028")
 path_source <- projthis::proj_path_source("README")
 ```
 
-In this workflow, ...
+In this workflow, pbmc3k
 
 ```{r packages}
 library("conflicted")
